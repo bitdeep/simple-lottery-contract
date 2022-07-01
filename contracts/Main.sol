@@ -7,20 +7,103 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Main is Ownable {
     using SafeERC20 for IERC20;
-    string private greeting;
-    IERC20 public iris;
-    IERC20 public xhrms;
-    event Convert(address user, uint amount);
-    constructor(address _iris, address _xhrms) {
-        iris = IERC20(_iris);
-        xhrms = IERC20(_xhrms);
+    uint public price = 1 ether;
+    uint public id = 1;
+    uint public triggerIndex;
+    uint public triggerMax = 10;
+    uint public ticket;
+    address public lastWinnerAddress;
+    uint public lastWinnerTicket;
+    uint public lastWinnerTime;
+    uint public lastWinnerPremium;
+    mapping(uint => uint[]) public ticketsByLottery;
+    mapping(uint => address) public userByTicket;
+    mapping(uint => mapping(address => uint[])) public ticketsByUser;
+    address FEE_RECIPIENT;
+    constructor() {
+        FEE_RECIPIENT = msg.sender;
     }
     function withdrawTokens(address _tokenAddress, uint256 _tokenAmount) external onlyOwner {
         IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
     }
-    function convert(uint256 amount) external {
-        iris.safeTransferFrom(address(msg.sender), address(0x000000000000000000000000000000000000dEaD), amount);
-        xhrms.safeTransfer(address(msg.sender), amount);
-        emit Convert(msg.sender, amount);
+
+    function setFeeRecipient(address to) public onlyOwner {
+        FEE_RECIPIENT = to;
     }
+
+    function setTriggerMax(uint v) public onlyOwner {
+        triggerMax = v;
+    }
+
+    function setPrice(uint v) public onlyOwner {
+        price = v;
+    }
+
+    event OnBuy(address user, uint id, uint ticket);
+
+    function buy(uint256 total) external payable {
+        require(msg.value >= total * price, "invalid amount set");
+        for (uint i = 0; i < total; i ++) {
+            ticketsByLottery[id].push(ticket);
+            ticketsByUser[id][msg.sender].push(ticket);
+            userByTicket[ticket] = msg.sender;
+            triggerIndex++;
+            emit OnBuy(msg.sender, id, ticket);
+            ticket++;
+        }
+        trigger();
+    }
+
+    event OnTrigger(address winner, uint premium, uint ticket, uint id);
+
+    function trigger() public {
+        if (triggerIndex < triggerMax) {
+            return;
+        }
+        _trigger();
+    }
+
+    function adminTrigger() public onlyOwner {
+        _trigger();
+    }
+
+    function _trigger() internal {
+        triggerIndex = 0;
+
+        (uint _previousBlockNumber, bytes32 _previousBlockHash) = moreRand();
+        uint total = ticketsByLottery[id].length;
+        uint256 _mod = total - 1;
+        uint256 _randomNumber;
+        bytes32 _structHash = keccak256(abi.encode(msg.sender, block.difficulty, gasleft(),
+            block.timestamp, _previousBlockNumber, _previousBlockHash));
+        _randomNumber = uint256(_structHash);
+        assembly {_randomNumber := mod(_randomNumber, _mod)}
+        lastWinnerAddress = userByTicket[_randomNumber];
+        lastWinnerTicket = _randomNumber;
+        lastWinnerTime = block.timestamp;
+
+        uint value = address(this).balance;
+        uint fee = value / 10;
+        lastWinnerPremium = value - fee;
+
+        lastWinnerAddress.call{value : lastWinnerPremium}("");
+        FEE_RECIPIENT.call{value : fee}("");
+
+        emit OnTrigger(lastWinnerAddress, lastWinnerPremium, lastWinnerTicket, id);
+
+        id++;
+    }
+
+    function moreRand() public view returns (uint, bytes32) {
+        uint _previousBlockNumber;
+        bytes32 _previousBlockHash;
+        _previousBlockNumber = uint(block.number - 1);
+        _previousBlockHash = bytes32(blockhash(_previousBlockNumber));
+        return (_previousBlockNumber, _previousBlockHash);
+    }
+
+    function getTicketsByUser(uint id, address user) public view returns (uint[] memory) {
+        return ticketsByUser[id][user];
+    }
+
 }

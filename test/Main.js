@@ -1,35 +1,41 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const {expect} = require("chai");
+const {ethers} = require("hardhat");
 
 describe("Main", function () {
-  it("all", async function () {
-    const [ dev ] = await ethers.getSigners();
-    const HermesToken = await ethers.getContractFactory("HermesToken");
-    const IrisToken = await ethers.getContractFactory("IrisToken");
-    const HermesBar = await ethers.getContractFactory("HermesBar");
-    const Main = await ethers.getContractFactory("Main");
+    it("test", async function () {
+        const [a, b, c, d, e, f, g, h, i, j, l] = await ethers.getSigners();
+        const Main = await ethers.getContractFactory("Main");
+        const main = await Main.deploy();
+        await main.deployed();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        await test();
+        async function test(){
+            const cost = '1000000000000000000';
+            await main.connect(a).buy(1, {value: cost});
+            await main.connect(b).buy(1, {value: cost});
+            await main.connect(c).buy(1, {value: cost});
+            await main.connect(d).buy(1, {value: cost});
+            await main.connect(e).buy(1, {value: cost});
+            await main.connect(f).buy(1, {value: cost});
+            await main.connect(g).buy(1, {value: cost});
+            await main.connect(g).buy(1, {value: cost});
+            await main.connect(i).buy(1, {value: cost});
+            await main.connect(j).buy(1, {value: cost});
+            await main.connect(l).buy(1, {value: cost});
+            const lastWinnerAddress = await main.lastWinnerAddress();
+            const lastWinnerTicket = (await main.lastWinnerTicket()).toString();
 
-    const hermes = await HermesToken.deploy();
-    await hermes.deployed();
+            console.log(lastWinnerTicket, lastWinnerAddress);
+        }
 
-    const iris = await IrisToken.deploy();
-    await iris.deployed();
+    });
 
-    const xhrms = await HermesBar.deploy(hermes.address);
-    await xhrms.deployed();
-
-    const main = await Main.deploy(iris.address, xhrms.address);
-    await main.deployed();
-
-    await hermes.mint(dev.address, 20);
-    await hermes.approve(xhrms.address, 20);
-    await xhrms.enter(20);
-    await xhrms.transfer(main.address, 20);
-
-    await iris.mint(dev.address, 2);
-    await iris.approve(main.address, 20);
-    await main.convert(2);
-    // await main.convert(1);
-
-  });
 });
