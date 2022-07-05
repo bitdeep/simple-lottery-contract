@@ -526,7 +526,7 @@
             const enabled = await accountLoad(provider);
             if (enabled) {
                 $('#WALLET').html('wallet: ...' + account.substr(account.length - 5));
-                main = new web3.eth.Contract(abi, '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853');
+                main = new web3.eth.Contract(abi, '0xaa23C9195D4FD6A68e2518BdCf187bb1b744706B');
                 await init();
             } else {
                 alert('no web3 connection');
