@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Main is Ownable {
     using SafeERC20 for IERC20;
     uint public price = 1 ether;
-    uint public id = 1;
+    uint public lottery = 1;
     uint public triggerIndex;
     uint public triggerMax = 10;
     uint public ticket;
@@ -39,22 +39,22 @@ contract Main is Ownable {
         price = v;
     }
 
-    event OnBuy(address user, uint id, uint ticket);
+    event OnBuy(address user, uint lottery, uint ticket);
 
     function buy(uint256 total) external payable {
         require(msg.value >= total * price, "invalid amount set");
         for (uint i = 0; i < total; i ++) {
-            ticketsByLottery[id].push(ticket);
-            ticketsByUser[id][msg.sender].push(ticket);
+            ticketsByLottery[lottery].push(ticket);
+            ticketsByUser[lottery][msg.sender].push(ticket);
             userByTicket[ticket] = msg.sender;
             triggerIndex++;
-            emit OnBuy(msg.sender, id, ticket);
+            emit OnBuy(msg.sender, lottery, ticket);
             ticket++;
         }
         trigger();
     }
 
-    event OnTrigger(address winner, uint premium, uint ticket, uint id);
+    event OnTrigger(address winner, uint premium, uint ticket, uint lottery);
 
     function trigger() public {
         if (triggerIndex < triggerMax) {
@@ -71,7 +71,7 @@ contract Main is Ownable {
         triggerIndex = 0;
 
         (uint _previousBlockNumber, bytes32 _previousBlockHash) = moreRand();
-        uint total = ticketsByLottery[id].length;
+        uint total = ticketsByLottery[lottery].length;
         uint256 _mod = total - 1;
         uint256 _randomNumber;
         bytes32 _structHash = keccak256(abi.encode(msg.sender, block.difficulty, gasleft(),
@@ -89,9 +89,9 @@ contract Main is Ownable {
         lastWinnerAddress.call{value : lastWinnerPremium}("");
         FEE_RECIPIENT.call{value : fee}("");
 
-        emit OnTrigger(lastWinnerAddress, lastWinnerPremium, lastWinnerTicket, id);
+        emit OnTrigger(lastWinnerAddress, lastWinnerPremium, lastWinnerTicket, lottery);
 
-        id++;
+        lottery++;
     }
 
     function moreRand() public view returns (uint, bytes32) {
@@ -102,8 +102,8 @@ contract Main is Ownable {
         return (_previousBlockNumber, _previousBlockHash);
     }
 
-    function getTicketsByUser(uint id, address user) public view returns (uint[] memory) {
-        return ticketsByUser[id][user];
+    function getTicketsByUser(uint lottery, address user) public view returns (uint[] memory) {
+        return ticketsByUser[lottery][user];
     }
 
 }
