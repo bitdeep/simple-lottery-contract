@@ -34,7 +34,7 @@
                     {
                         "indexed": false,
                         "internalType": "uint256",
-                        "name": "id",
+                        "name": "lottery",
                         "type": "uint256"
                     },
                     {
@@ -71,7 +71,7 @@
                     {
                         "indexed": false,
                         "internalType": "uint256",
-                        "name": "id",
+                        "name": "lottery",
                         "type": "uint256"
                     }
                 ],
@@ -121,7 +121,7 @@
                 "inputs": [
                     {
                         "internalType": "uint256",
-                        "name": "id",
+                        "name": "lottery",
                         "type": "uint256"
                     },
                     {
@@ -136,19 +136,6 @@
                         "internalType": "uint256[]",
                         "name": "",
                         "type": "uint256[]"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "id",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
                     }
                 ],
                 "stateMutability": "view",
@@ -196,6 +183,19 @@
             {
                 "inputs": [],
                 "name": "lastWinnerTime",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "lottery",
                 "outputs": [
                     {
                         "internalType": "uint256",
@@ -534,17 +534,17 @@
         }
 
         let price = 0;
-        let id;
+        let lottery;
         async function init() {
             price = (await main.methods.price().call()).toString();
-            id = (await main.methods.id().call()).toString();
+            lottery = (await main.methods.lottery().call()).toString();
             const triggerIndex = (await main.methods.triggerIndex().call()).toString();
             const triggerMax = (await main.methods.triggerMax().call()).toString();
             const ticket = (await main.methods.ticket().call()).toString();
             const lastWinnerAddress = (await main.methods.lastWinnerAddress().call()).toString();
-            const tickets = await main.methods.getTicketsByUser(id, account).call();
+            const tickets = await main.methods.getTicketsByUser(lottery, account).call();
             $('#price').html(price/1e18);
-            $('#id').html(id);
+            $('#lottery').html(lottery);
             $('#triggerIndex').html(triggerIndex);
             $('#triggerMax').html(triggerMax);
             $('#ticket').html(ticket);
@@ -567,7 +567,7 @@
 
 Wallet: <span id="WALLET"></span>
 price: <span id="price"></span>
-id: <span id="id"></span>
+lottery: <span id="lottery"></span>
 triggerIndex: <span id="triggerIndex"></span>
 triggerMax: <span id="triggerMax"></span>
 ticket: <span id="ticket"></span>
